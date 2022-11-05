@@ -15,6 +15,7 @@ typedef struct {
     int out;
     int counter;
     int sum;
+    int flag;
     pthread_mutex_t lock;
 } Buffer;
 
