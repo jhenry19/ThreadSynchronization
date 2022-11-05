@@ -3,4 +3,4 @@ project(ThreadSynchronization C)
 
 set(CMAKE_C_STANDARD 99)
 
-add_executable(ThreadSynchronization main.c)
+add_executable(ThreadSynchronization main.c pthreads-example-simpler.c)
