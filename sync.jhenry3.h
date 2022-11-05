@@ -1,8 +1,8 @@
 #ifndef THREADSYNCHRONIZATION_SYNC_JHENRY3_H
 #define THREADSYNCHRONIZATION_SYNC_JHENRY3_H
 #include <pthread.h>
-#define N 8
-#define MAX 8
+#define N 10
+#define MAX 80
 
 typedef struct {
     int cumulativeSum;
@@ -11,8 +11,6 @@ typedef struct {
 
 typedef struct {
     int buf[MAX];
-    int in;
-    int out;
     int counter;
     int sum;
     int flag;
