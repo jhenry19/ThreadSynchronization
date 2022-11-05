@@ -79,8 +79,8 @@ int main() {
   buffer.counter = 0;
   pthread_mutex_init(&buffer.lock, NULL);
 
-  pthread_create(&tid1, NULL, runnerOne, &buffer);  
-  pthread_create(&tid2, NULL, runnerTwo, &buffer);  
+  pthread_create(&tid1, NULL, runnerOne, &buffer);
+  pthread_create(&tid2, NULL, runnerTwo, &buffer);
 
   pthread_join(tid1, NULL);
   pthread_join(tid2, NULL);
