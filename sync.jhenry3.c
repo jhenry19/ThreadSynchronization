@@ -6,8 +6,6 @@ int insertItem(Buffer *buffer, int element) {
     int rtnval = 1;
     pthread_mutex_lock(&buffer->lock);
     if (buffer->counter < MAX) {
-        while (buffer->flag < 0)
-            pthread_cond_wait((pthread_cond_t *) &(buffer->flag), &buffer->lock);
         buffer->buf[buffer->counter] = element;
         buffer->flag = -1;
         buffer->counter += 1;
@@ -21,8 +19,6 @@ int removeItem(Buffer *buffer, int *element) {
     int rtnval = 1;
     pthread_mutex_lock(&buffer->lock);
     if (buffer->counter > 0) {
-        while (buffer->flag >= 0)
-            pthread_cond_wait((pthread_cond_t *) &(buffer->flag), &buffer->lock);
         buffer->sum += buffer->buf[buffer->counter - 1];
         buffer->flag = 0;
         rtnval = 0;
@@ -42,7 +38,6 @@ void *producer(void *param) {
     for (int i = 0; i < N; ++i) {
         sts = insertItem(buffer, i);
         if (sts == 0) {
-            pthread_cond_signal((pthread_cond_t *) &(buffer->flag));
             printf("producer wrote the value %d\n", i);
         }
         else
@@ -57,7 +52,6 @@ void *consumer(void *param) {
     for (int i = 0; i < N; ++i) {
         sts = removeItem(buffer, i);
         if (sts == 0) {
-            pthread_cond_signal((pthread_cond_t *) &(buffer->flag));
             printf("consumer read the value %d\n", i);
         }
         else
