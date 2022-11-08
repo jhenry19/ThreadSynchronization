@@ -7,7 +7,7 @@ int insertItem(Buffer *buffer, int element) {
     pthread_mutex_lock(&buffer->lock);
     if (buffer->counter < MAX) {
         buffer->buf[buffer->counter] = element;
-        buffer->flag = -1;
+        buffer->readyToRead = true;
         buffer->counter += 1;
         rtnval = 0;
     }
@@ -20,7 +20,7 @@ int removeItem(Buffer *buffer, int *element) {
     pthread_mutex_lock(&buffer->lock);
     if (buffer->counter > 0) {
         buffer->sum += buffer->buf[buffer->counter - 1];
-        buffer->flag = 0;
+        buffer->readyToRead = false;
         rtnval = 0;
     }
     pthread_mutex_unlock(&buffer->lock);
@@ -68,7 +68,7 @@ int main() {
 
     buffer.counter = 0;
     buffer.sum = 0;
-    buffer.flag = 0;
+    buffer.readyToRead = false;
     pthread_mutex_init(&buffer.lock, NULL);
 
     pthread_create(&producerThread, NULL, producer, &buffer);
