@@ -21,10 +21,13 @@ int removeItem(Buffer *buffer, int *element) {
     int rtnval = 1;
     pthread_mutex_lock(&buffer->lock);
     if (buffer->counter > 0 && buffer->readyToRead == true) {
-        buffer->sum += buffer->buf[buffer->counter - 1];
-        buffer->readyToRead = false;
-        rtnval = 0;
-        printf("consumer read the value %d\n", element);
+        if (buffer->buf[buffer->counter - 1] == -1) rtnval = 2;
+        else {
+            buffer->sum += buffer->buf[buffer->counter - 1];
+            buffer->readyToRead = false;
+            rtnval = 0;
+            printf("consumer read the value %d\n", *element);
+        }
 
     }
     pthread_mutex_unlock(&buffer->lock);
@@ -39,15 +42,15 @@ int removeItem(Buffer *buffer, int *element) {
 void *producer(void *param) {
     Buffer *buffer = (Buffer *) param;
     int sts;
-    for (int i = 0; i < N; ++i) {
+    for (int i = 0; i < N + 1; ++i) {
         bool tryToInsert = true;
         while(tryToInsert) {
-            sts = insertItem(buffer, i);
+            if (i == N) sts = insertItem(buffer, -1);
+            else sts = insertItem(buffer, i);
+
             if (sts == 0) {
                 tryToInsert = false;
             }
-//            else
-//                printf("producer FAILED to write %d\n", i);
         }
     }
     pthread_exit(NULL);
@@ -56,15 +59,21 @@ void *producer(void *param) {
 void *consumer(void *param) {
     Buffer *buffer = (Buffer *) param;
     int sts;
-    for (int i = 0; i < N; ++i) {
+    bool consuming = true;
+    int counter = 0;
+    while (consuming) {
         bool tryToRead = true;
         while(tryToRead) {
-            sts = removeItem(buffer, i);
+            sts = removeItem(buffer, &counter);
             if (sts == 0) {
+                ++counter;
                 tryToRead = false;
             }
-//            else
-//                printf("consumer FAILED to read value %d\n", i);
+            else if (sts == 2) { // Given when -1 is read by consumer
+                pthread_mutex_lock(&buffer->lock);
+                printf("sum = %d", buffer->buf.sum);
+                consuming = false;
+            }
         }
     }
     pthread_exit(NULL);
@@ -87,7 +96,7 @@ int main() {
     pthread_join(producerThread, NULL);
     pthread_join(consumerThread, NULL);
 
-    printf("sum = %d", buffer.sum);
+
 
     return 0;
 }
