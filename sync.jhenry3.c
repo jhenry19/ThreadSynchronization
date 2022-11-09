@@ -11,7 +11,6 @@ int insertItem(Buffer *buffer, int element) {
         buffer->counter += 1;
         rtnval = 0;
         printf("producer wrote the value %d\n", element);
-
     }
     pthread_mutex_unlock(&buffer->lock);
     return rtnval;
@@ -21,12 +20,15 @@ int removeItem(Buffer *buffer, int *element) {
     int rtnval = 1;
     pthread_mutex_lock(&buffer->lock);
     if (buffer->counter > 0 && buffer->readyToRead == true) {
-        if (buffer->buf[buffer->counter - 1] == -1) rtnval = 2;
+        if (buffer->buf[buffer->counter - 1] == -1) {
+            rtnval = 2;
+            printf("consumer read the value %d\n", buffer->buf[buffer->counter - 1]);
+        }
         else {
             buffer->sum += buffer->buf[buffer->counter - 1];
             buffer->readyToRead = false;
             rtnval = 0;
-            printf("consumer read the value %d\n", *element);
+            printf("consumer read the value %d\n", buffer->buf[buffer->counter - 1]);
         }
 
     }
@@ -71,8 +73,12 @@ void *consumer(void *param) {
             }
             else if (sts == 2) { // Given when -1 is read by consumer
                 pthread_mutex_lock(&buffer->lock);
-                printf("sum = %d", buffer->buf.sum);
+                printf("#samples = %d\n", counter);
+                printf("sum = %d\n", buffer->sum);
+                pthread_mutex_unlock(&buffer->lock);
+                tryToRead = false;
                 consuming = false;
+
             }
         }
     }
