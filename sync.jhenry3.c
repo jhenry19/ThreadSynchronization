@@ -5,11 +5,13 @@
 int insertItem(Buffer *buffer, int element) {
     int rtnval = 1;
     pthread_mutex_lock(&buffer->lock);
-    if (buffer->counter < MAX) {
+    if (buffer->counter < MAX && buffer->readyToRead == false) {
         buffer->buf[buffer->counter] = element;
         buffer->readyToRead = true;
         buffer->counter += 1;
         rtnval = 0;
+        printf("producer wrote the value %d\n", element);
+
     }
     pthread_mutex_unlock(&buffer->lock);
     return rtnval;
@@ -18,10 +20,12 @@ int insertItem(Buffer *buffer, int element) {
 int removeItem(Buffer *buffer, int *element) {
     int rtnval = 1;
     pthread_mutex_lock(&buffer->lock);
-    if (buffer->counter > 0) {
+    if (buffer->counter > 0 && buffer->readyToRead == true) {
         buffer->sum += buffer->buf[buffer->counter - 1];
         buffer->readyToRead = false;
         rtnval = 0;
+        printf("consumer read the value %d\n", element);
+
     }
     pthread_mutex_unlock(&buffer->lock);
     return rtnval;
@@ -36,12 +40,15 @@ void *producer(void *param) {
     Buffer *buffer = (Buffer *) param;
     int sts;
     for (int i = 0; i < N; ++i) {
-        sts = insertItem(buffer, i);
-        if (sts == 0) {
-            printf("producer wrote the value %d\n", i);
+        bool tryToInsert = true;
+        while(tryToInsert) {
+            sts = insertItem(buffer, i);
+            if (sts == 0) {
+                tryToInsert = false;
+            }
+//            else
+//                printf("producer FAILED to write %d\n", i);
         }
-        else
-            printf("producer FAILED to write %d\n", i);
     }
     pthread_exit(NULL);
 }
@@ -50,12 +57,15 @@ void *consumer(void *param) {
     Buffer *buffer = (Buffer *) param;
     int sts;
     for (int i = 0; i < N; ++i) {
-        sts = removeItem(buffer, i);
-        if (sts == 0) {
-            printf("consumer read the value %d\n", i);
+        bool tryToRead = true;
+        while(tryToRead) {
+            sts = removeItem(buffer, i);
+            if (sts == 0) {
+                tryToRead = false;
+            }
+//            else
+//                printf("consumer FAILED to read value %d\n", i);
         }
-        else
-            printf("consumer FAILED to read value %d\n", i);
     }
     pthread_exit(NULL);
 }
